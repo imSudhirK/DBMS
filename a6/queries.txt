@@ -1,0 +1,60 @@
+#2a
+MATCH (p1:User)-[:Sent]->(t1:Tweet)-[:Mentions]->(p1:User)
+RETURN  DISTINCT p1.name
+ORDER BY p1.name;
+
+#2b  
+MATCH (t1:Tweet)-[r:Contains]->(h1:Hashtag)
+WHERE h1.hashtag = "proud" AND t1.tweet STARTS WITH 'we' 
+RETURN t1;
+
+#2c
+MATCH (p2:User {name:"Jessica"})-[:Sent]->(t1:Tweet)<-[:Sent]-(p1:User)
+WHERE NOT EXISTS((t1)-[:Contains]->(:Hashtag))
+RETURN  DISTINCT p1.name, t1.tweet;
+
+#2d
+MATCH (p2:User {name:"Jessica"})-[:Sent]->(t1:Tweet)<-[:Sent]-(p1:User)
+WHERE NOT EXISTS((t1)-[:Contains]->(:Hashtag)) AND NOT EXISTS((p1)-[:Follows]->(:User {name: "Jessica"}))
+RETURN  DISTINCT p1.name, t1.tweet;
+
+#2e
+MATCH (p1:User)<-[:Follows]-(:User)
+RETURN p1.name, COUNT(*) AS followers_count
+ORDER BY followers_count DESC LIMIT 5;
+
+
+#2f ....
+MATCH (:User {name: "Ashley"})-[:Follows]->(p:User)
+RETURN DISTINCT p.name AS user, 1 AS hop;
+
+
+#2g
+MATCH (p1:User)-[:Follows]->(p:User)
+WHERE EXISTS((:User {name: "Thomas"})-[:Follows]->(p:User)) AND p1.name <> "Thomas"
+RETURN p1.name, COUNT(*) AS users_count
+ORDER BY users_count DESC, p1.name 
+LIMIT 5;
+
+#2h
+MATCH (p1:User)-[:Sent]->(t1:Tweet)-[:Mentions]->(p2:User)
+WHERE p1.name <> p2.name AND NOT EXISTS((p1)-[:Follows]->(p2))
+RETURN p1.name, p2.name, t1.tweet;
+
+
+#2i
+MATCH (p1:User)-[:Sent]->(:Tweet)-[:Contains]->(h1:Hashtag)
+WHERE EXISTS((h1)<-[:Contains]-(:Tweet)<-[:Sent]-(:User {name: "Thomas"}))
+RETURN DISTINCT p1.name;
+
+#2j
+MATCH (p1:User)-[:Follows]->(p:User)
+WHERE EXISTS((:User {name: "Thomas"})-[:Follows]->(p:User)) AND p1.name <> "Thomas"
+WITH p1, COUNT(p1) AS users_count
+ORDER BY users_count DESC, p1.name 
+LIMIT 5
+MATCH (p2:User)-[:Follows]->(px:User)
+WHERE EXISTS((:User {name: "Thomas"})-[:Follows]->(px:User)) AND p2.name <> "Thomas"  AND p2 = p1
+RETURN px.name, COUNT(px) AS uc 
+ORDER BY uc DESC, px.name
+LIMIT 2;
