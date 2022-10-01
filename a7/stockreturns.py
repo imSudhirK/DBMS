@@ -1,17 +1,19 @@
 from pyspark.sql import SQLContext
 from pyspark import SparkContext
-from pyspark.sql.functions import *
+import pyspark.sql.functions as sf
 
-spark = SparkContext("local", "stock prices")
+if __name__ == "__main__":
+    # create Spark context with necessary configuration
+    spark = SparkContext("local", "Stock Returns")
 
-df = SQLContext(spark).read.option("header", "true").csv("stock_prices.csv")
+    # read json data from the newdata directory
+    df = SQLContext(spark).read.csv('./stock_prices.csv', header=True)
 
-# df.select(df['date'], \
-# 	((df['close']-df['open'])*100.00/df['open']).alias("return"))\
-# 	.groupBy('date').agg(avg('return').alias('avg_return')).show()
+    # select date, sum((cl-op)/op*100) as avg_return
+    # from r
+    # group by date
+    returns = df.selectExpr("date", "(close-open)/open*100 as return")\
+        .groupBy("date").agg(sf.avg("return").alias("avg_return"))
 
-df1 = df.select(df['date'], \
-	((df['close']-df['open'])*100.00/df['open']).alias("return"))\
-	.groupBy('date').agg(avg('return').alias('avg_return'))
-
-df1.select('date', 'avg_return').coalesce(1).write.format('csv').save('stockreturns')
+    # save the counts to output
+    returns.write.csv("./stockreturns/")
